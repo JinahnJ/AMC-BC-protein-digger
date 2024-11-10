@@ -1,0 +1,26 @@
+dataset_file: ./dst/tidy_dataset.pkl
+model_setting_DecisionTree:
+  class_weight: balanced
+  max_depth: 3
+  min_samples_leaf: 3
+  min_samples_split: 5
+model_setting_LogisticRegression:
+  class_weight: balanced
+  max_iter: 10
+  solver: liblinear
+model_setting_SequentialFeatureSelector:
+  cv: 3
+optimization_criteria:
+  p-value: 0.05
+  train_accuracy: 0.7
+  val_accuracy: 0.7
+should_not_be_string_column: Value
+target_category: !!python/tuple
+- cell_type
+- train_group
+threshold:
+  Stroma: 5
+  Tumor: 1
+validation_category: !!python/tuple
+- train_group
+- response
