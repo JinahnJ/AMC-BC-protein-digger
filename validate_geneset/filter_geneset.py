@@ -61,6 +61,6 @@ if __name__ == '__main__':
     a = tuple([tumor_pool(), stroma_pool(), generate_geneset(stroma_mean_pool()), generate_geneset(tumor_mean_pool())])
     generate_genepool_tup = generate_genepool_cls(Genepool_container, *a)
     df_loader = tuple([p_generate_genepool_df_loader(i) for i in generate_genepool_tup])
-    train_data = df_loader[0]
+    train_data = df_loader[1]
     s = Genepool_ranker(train_data, 2, 5, './config/config.yaml')
     q = filter_acc_p_value_from_ranker(s)

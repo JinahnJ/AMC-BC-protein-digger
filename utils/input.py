@@ -11,4 +11,3 @@ def config_file(root='./config/config.yaml'):
 def get_threshold(config_dict:dict)->dict:
     threshold_dict = config_dict['threshold']
     return threshold_dict
-

@@ -1,4 +1,7 @@
 dataset_file: ./dst/tidy_dataset.pkl
+genepool_selection_range:
+  max_value: 5
+  min_value: 2
 model_setting_DecisionTree:
   class_weight: balanced
   max_depth: 3
