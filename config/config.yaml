@@ -15,8 +15,8 @@ model_setting_SequentialFeatureSelector:
   cv: 3
 optimization_criteria:
   p-value: 0.05
-  train_accuracy: 0.7
-  val_accuracy: 0.7
+  train_accuracy: 0.5
+  val_accuracy: 0.5
 should_not_be_string_column: Value
 target_category: !!python/tuple
 - cell_type

@@ -6,17 +6,13 @@ from functools import partial
 import pandas as pd
 from dataclasses import dataclass, field
 import sklearn.feature_selection
-from utils.dataframe_utils import get_dataframe
-from utils.input import config_file
 from utils.paired_df_dcls import Paired_dataframe
 from sklearn.feature_selection import SequentialFeatureSelector
-from model.model import LR_model, DT_model, SFS_setting
 from sklearn.metrics import confusion_matrix
 from scipy.stats import ttest_ind
 import numpy as np
-from generate_genepool.genepool_generator import tumor_pool, stroma_pool
-from generate_genepool.mean_gene_pool import tumor_mean_pool, stroma_mean_pool
-from generate_genepool.genepool_generator import generate_geneset
+from utils.input import config_file
+from model.model import SFS_setting
 
 @dataclass(frozen=True)
 class Genepool_container:
@@ -122,10 +118,10 @@ class Genepool_ranker:
     genepool_df_loader:Genepool_df_loader
     min_vals:int
     max_vals:int
-    config_dict_root:str='./config/config.yaml'
+    config_dict_root:str
 
-def generate_genepool_ranker(genepool_df_loader:Genepool_df_loader, min_vals:int, max_vals:int):
-    return Genepool_ranker(genepool_df_loader, min_vals, max_vals)
+def generate_genepool_ranker(genepool_df_loader:Genepool_df_loader, min_vals:int, max_vals:int, config_dict_root:str='./config/config.yaml') -> Genepool_ranker:
+    return Genepool_ranker(genepool_df_loader, min_vals, max_vals, config_dict_root)
 
 def sfs_tuple(non_scaled_pool:set, std_pool:set,
               min_vals:int, max_vals:int, estimator:object, config_dict_root:str) -> tuple:
@@ -249,32 +245,37 @@ def gene_pool_and_prediction_performance(rank_result:Genepool_rank_result_contai
 
     return gene_pool, pred_performance
 
+def prediction_validation(gene_pool_container:Genepool_container, total_df:pd.DataFrame, feature_selector_model:object,
+                          predictor_model:object, config_dict_root:str='./config/config.yaml'):
+    config_dict = config_file(config_dict_root)
+    gene_pool_df_loader = generate_genepool_df_loader(gene_pool_container, total_df)
+    generate_gene_pool_ranker = partial(generate_genepool_ranker, min_vals=config_dict['genepool_selection_range']['min_value'],
+                                 max_vals=config_dict['genepool_selection_range']['max_value'], config_dict_root=config_dict_root)
+    gene_pool_ranker = generate_gene_pool_ranker(gene_pool_df_loader)
+    generate_sfs = partial(generate_sfs_tuple, estimator=feature_selector_model)
+    untrained_sfs = generate_sfs(gene_pool_ranker)
+    trained_sfs_models = train_sfs(untrained_sfs, gene_pool_ranker)
+    ranked_antibody = tuple(map(get_ranked_antibody, trained_sfs_models))
+    sliced_df = get_slice_df_by_ab(gene_pool_ranker, ranked_antibody)
+    predict_performance = partial(prediction_performance, estimator=predictor_model)
+    perform = tuple(map(predict_performance, sliced_df))
+    contain_df_loader = partial(gene_pool_and_prediction_performance, df_loader=gene_pool_ranker.genepool_df_loader)
+    result = tuple(map(contain_df_loader, perform))
+
+    return result
+
+
+
 if __name__ == '__main__':
-
-    a = tuple([tumor_pool(), stroma_pool(), generate_geneset(stroma_mean_pool()), generate_geneset(tumor_mean_pool())])
-    generate_genepool_tup = generate_genepool_cls(Genepool_container, *a)
-    b = generate_genepool_tup[1]
-    config_dict = config_file('./config/config.yaml')
-    lr = LR_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
-    dt = DT_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
-    df = get_dataframe(config_dict['dataset_file'])
-    c = generate_genepool_df_loader(b, df)
-
-    generate_gp_ranker = partial(generate_genepool_ranker, min_vals=config_dict['genepool_selection_range']['min_value'],
-                                 max_vals=config_dict['genepool_selection_range']['max_value'])
-
-    d = Genepool_ranker(c, 2, 5, './config/config.yaml')
-
-    sfs_t = partial(generate_sfs_tuple, estimator=dt)
-    e = sfs_t(d)
-
-    f = train_sfs(e, d)
-
-
-    ranked_ab = tuple(map(get_ranked_antibody, f))
-    sliced_df = get_slice_df_by_ab(d, ranked_ab)
-
-    i = partial(prediction_performance, estimator=dt)
-    res = tuple(map(i, sliced_df))
-    j = partial(gene_pool_and_prediction_performance, df_loader=d.genepool_df_loader)
-    res2 = tuple(map(j, res))
+    pass
+    # a = tuple([tumor_pool(), stroma_pool(), generate_geneset(stroma_mean_pool()), generate_geneset(tumor_mean_pool())])
+    # generate_genepool_tup = generate_genepool_cls(Genepool_container, *a)
+    # b = generate_genepool_tup[1]
+    # config_dict = config_file('./config/config.yaml')
+    # lr = LR_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
+    # dt = DT_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
+    # df = get_dataframe(config_dict['dataset_file'])
+    # c = prediction_validation(b, df, lr, lr, './config/config.yaml')
+    #
+    # p_f = partial(prediction_validation, total_df=df, feature_selector_model=dt, predictor_model=dt, config_dict_root='./config/config.yaml')
+    # t = tuple(map(p_f, generate_genepool_tup))

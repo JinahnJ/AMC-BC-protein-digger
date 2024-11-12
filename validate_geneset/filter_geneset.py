@@ -1,11 +1,14 @@
 from typing import Tuple
 import numpy as np
+from functools import partial
+from utils.input import config_file
+from generate_genepool.genepool_generator import generate_geneset
+from validate_geneset.get_geneset import prediction_validation, Genepool_container, Genepool_rank_result_container, \
+    generate_genepool_cls, Genepool_ranker, Genepool_df_loader
+from model.model import LR_model, DT_model, SFS_setting
+from utils.dataframe_utils import get_dataframe
 from generate_genepool.genepool_generator import tumor_pool, stroma_pool
 from generate_genepool.mean_gene_pool import tumor_mean_pool, stroma_mean_pool
-from generate_genepool.genepool_generator import generate_geneset
-from validate_geneset.get_geneset import Genepool_container, Genepool_ranker, generate_genepool_cls, \
-    p_generate_genepool_df_loader, Genepool_df_loader, Genepool_rank_result_container
-
 
 def more_than(i: float, threshold: float) -> bool:
     if i >= threshold:
@@ -45,22 +48,23 @@ def check_accuracy_and_p_value(t: Genepool_rank_result_container) -> bool:
     return all([p_value, cm])
 
 
-def filter_acc_p_value_from_ranker(s: Genepool_ranker):
-    perf = s.gene_pool_and_prediction_performance
-    get_genpool_rank_container = lambda x: next(x[1])
-    get_p_value = lambda x: x.ttest_p_value
-    get_cm = lambda x: x.cm
-    p = tuple(map(get_genpool_rank_container, perf))
-    q = tuple(map(get_cm, p))
-    r = tuple(map(accuracy_check, q))
-    s = tuple(map(get_p_value, p))
-    return p, q, r, s
+def filter_acc_p_value_from_ranker(t:tuple[Genepool_df_loader, Genepool_rank_result_container]):
+    get_gene_pool_df_loader = lambda x : x[0]
+    get_gene_pool_rank_result_container = lambda x : x[1]
+    cm = lambda x : get_gene_pool_rank_result_container(x).cm
+    t_p_value = lambda x : get_gene_pool_rank_result_container(x).ttest_p_value
+
+    return get_gene_pool_df_loader(t), get_gene_pool_rank_result_container(t), accuracy_check(cm(t)), check_p_value(t_p_value(t))
 
 
 if __name__ == '__main__':
     a = tuple([tumor_pool(), stroma_pool(), generate_geneset(stroma_mean_pool()), generate_geneset(tumor_mean_pool())])
     generate_genepool_tup = generate_genepool_cls(Genepool_container, *a)
-    df_loader = tuple([p_generate_genepool_df_loader(i) for i in generate_genepool_tup])
-    train_data = df_loader[1]
-    s = Genepool_ranker(train_data, 2, 5, './config/config.yaml')
-    q = filter_acc_p_value_from_ranker(s)
+    config_dict = config_file('./config/config.yaml')
+    lr = LR_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
+    dt = DT_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
+    df = get_dataframe(config_dict['dataset_file'])
+    p_f = partial(prediction_validation, total_df=df, feature_selector_model=dt, predictor_model=dt, config_dict_root='./config/config.yaml')
+    t = tuple(map(p_f, generate_genepool_tup))
+    b = t[1]
+    c = tuple(map(filter_acc_p_value_from_ranker, b))
