@@ -30,8 +30,8 @@ def get_genepool(root:str, threshold:int, *filter_args)->tuple:
     geneset = generate_geneset(sliced_ranking)
     return geneset
 
-tumor_pool = partial(get_genepool, './config/config.yaml', 1, 'Tumor')
-stroma_pool = partial(get_genepool, './config/config.yaml', 10, 'Stroma')
+# tumor_pool = partial(get_genepool, './config/config.yaml', 1, 'Tumor')
+# stroma_pool = partial(get_genepool, './config/config.yaml', 10, 'Stroma')
 
 if __name__ == '__main__':
     a = get_antibody_ranking('./config/config.yaml')

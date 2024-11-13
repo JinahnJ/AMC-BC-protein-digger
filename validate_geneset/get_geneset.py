@@ -16,13 +16,7 @@ import numpy as np
 from utils.input import config_file
 from model.model import SFS_setting
 
-#
-from generate_genepool.genepool_generator import tumor_pool, stroma_pool
-from generate_genepool.mean_gene_pool import tumor_mean_pool, stroma_mean_pool
-from utils.input import config_file
-from model.model import LR_model, DT_model, SFS_setting
-from utils.dataframe_utils import get_dataframe
-from generate_genepool.genepool_generator import generate_geneset
+
 
 @dataclass(frozen=True)
 class Genepool_container:
@@ -210,12 +204,19 @@ def slicing_df(gene_list,tr_x, tr_y, val_x, val_y)->tuple:
     tup = tuple([tuple([tr_x[gene], tr_y, val_x[gene], val_y]) for gene in gene_list])
     return tup
 
-def get_slice_df_by_ab(gene_ranker:Genepool_ranker, ab_rank:tuple[np.array]):
+def get_slice_df_by_ab_nonstd(gene_ranker:Genepool_ranker, ab_rank:tuple[np.array]):
     non_scaled_f = partial(slicing_df, tr_x=gene_ranker.genepool_df_loader.load_train_val_data.train_x,
                 tr_y=gene_ranker.genepool_df_loader.load_train_val_data.train_y,
                 val_x=gene_ranker.genepool_df_loader.load_train_val_data.val_x,
                 val_y=gene_ranker.genepool_df_loader.load_train_val_data.val_y)
     return tuple(chain.from_iterable(tuple(map(non_scaled_f, ab_rank))))
+
+def get_slice_df_by_ab_std(gene_ranker:Genepool_ranker, ab_rank:tuple[np.array]):
+    scaled_f = partial(slicing_df, tr_x=gene_ranker.genepool_df_loader.load_train_val_data.std_train_x,
+                tr_y=gene_ranker.genepool_df_loader.load_train_val_data.std_train_y,
+                val_x=gene_ranker.genepool_df_loader.load_train_val_data.std_val_x,
+                val_y=gene_ranker.genepool_df_loader.load_train_val_data.std_val_y)
+    return tuple(chain.from_iterable(tuple(map(scaled_f, ab_rank))))
 
 def get_performance(cm):
     tn, fp, fn, tp = cm.ravel()
@@ -267,7 +268,7 @@ def gene_pool_and_prediction_performance(rank_result:Genepool_rank_result_contai
 
 
 def prediction_validation(gene_pool_container:Genepool_container, total_df:pd.DataFrame, feature_selector_model:object,
-                          predictor_model:object, config_dict_root:str='./config/config.yaml'):
+                          predictor_model:object, config_dict_root:str):
     config_dict = config_file(config_dict_root)
     gene_pool_df_loader = generate_genepool_df_loader(gene_pool_container, total_df)
     generate_gene_pool_ranker = partial(generate_genepool_ranker, min_vals=config_dict['genepool_selection_range']['min_value'],
@@ -278,8 +279,8 @@ def prediction_validation(gene_pool_container:Genepool_container, total_df:pd.Da
     trained_non_scaled_models, trained_std_scaled_models = train_sfs(untrained_sfs, gene_pool_ranker) # [[non_scaled_sfs], [std_sfs]]
     non_scaled_ranked_antibody = tuple(map(get_ranked_antibody, trained_non_scaled_models))
     std_scaled_ranked_antibody = tuple(map(get_ranked_antibody, trained_std_scaled_models))
-    non_scaled_sliced_df = get_slice_df_by_ab(gene_pool_ranker, non_scaled_ranked_antibody)
-    std_scaled_sliced_df = get_slice_df_by_ab(gene_pool_ranker, std_scaled_ranked_antibody)
+    non_scaled_sliced_df = get_slice_df_by_ab_nonstd(gene_pool_ranker, non_scaled_ranked_antibody)
+    std_scaled_sliced_df = get_slice_df_by_ab_std(gene_pool_ranker, std_scaled_ranked_antibody)
     predict_performance = partial(prediction_performance, estimator=predictor_model)
     non_scaled_perform = tuple(map(predict_performance, non_scaled_sliced_df))
     std_scaled_perform = tuple(map(predict_performance, std_scaled_sliced_df))
@@ -291,12 +292,5 @@ def prediction_validation(gene_pool_container:Genepool_container, total_df:pd.Da
 
 
 if __name__ == '__main__':
-    a = tuple([tumor_pool(), stroma_pool(), generate_geneset(stroma_mean_pool()), generate_geneset(tumor_mean_pool())])
-    generate_genepool_tup = generate_genepool_cls(Genepool_container, *a)
-    b = generate_genepool_tup[1]
-    config_dict = config_file('./config/config.yaml')
-    lr = LR_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
-    dt = DT_model(config_dict_root='./config/config.yaml', random_state=np.random.randint(10000))
-    df = get_dataframe(config_dict['dataset_file'])
-    c = prediction_validation(b, df, lr, lr, './config/config.yaml')
+    pass
 

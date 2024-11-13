@@ -15,15 +15,17 @@ model_setting_SequentialFeatureSelector:
   cv: 3
 optimization_criteria:
   p-value: 0.05
-  train_accuracy: 0.5
-  val_accuracy: 0.5
+  train_accuracy: 0.1
+  val_accuracy: 0.1
 should_not_be_string_column: Value
 target_category: !!python/tuple
 - cell_type
 - train_group
 threshold:
   Stroma: 5
+  Stroma_mean: 19
   Tumor: 1
+  Tumor_mean: 9
 validation_category: !!python/tuple
 - train_group
 - response

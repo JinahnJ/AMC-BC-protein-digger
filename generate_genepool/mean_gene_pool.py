@@ -47,8 +47,8 @@ def get_mean_genepool(root:str, threshold:int, key:tuple):
     sliced_key_rank = slicing_by_idx(key_rank, threshold)
     return sliced_key_rank
 
-tumor_mean_pool = partial(get_mean_genepool, './config/config.yaml', 9, ('Tumor',))
-stroma_mean_pool = partial(get_mean_genepool, './config/config.yaml', 19, ('Stroma',))
+# tumor_mean_pool = partial(get_mean_genepool, './config/config.yaml', 9, ('Tumor',))
+# stroma_mean_pool = partial(get_mean_genepool, './config/config.yaml', 19, ('Stroma',))
 
 
 if __name__ == '__main__':
