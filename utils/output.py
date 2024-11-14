@@ -70,7 +70,8 @@ def formatting_performance_and_model(t:tuple, scaled=None)->list[dict]:
             result_container = i[1]
             result_dict = {}
             result_dict['Feature_selection_model'] = get_model_result(container.model)
-            result_dict['Antibody'] = tuple(result_container.antibody)
+            result_dict['Gene_pool_group'] = container.group_name
+            result_dict['Selected_antibody_from_gene_pool'] = tuple(result_container.antibody)
             result_dict['Classification_model'] = get_model_result(result_container.base_model)
             train_cm, val_cm = result_container.cm
             train_accuracy, train_fdr, train_fpr = train_cm
@@ -87,9 +88,11 @@ def formatting_performance_and_model(t:tuple, scaled=None)->list[dict]:
             result_dict['p_value_in_train'] = float(p_value_in_train)
             result_dict['p_value_in_val'] = float(p_value_in_val)
             if scale == 'non_scaled':
-                result_dict['Gene_pool'] = tuple(container.non_scaled_pool)
+                result_dict['Scale'] = 'Non-scaled'
+                result_dict['Extracted_gene_pool'] = tuple(container.non_scaled_pool)
             else:
-                result_dict['Gene_pool'] = tuple(container.std_pool)
+                result_dict['Scale'] = 'std_scaled'
+                result_dict['Extracted_gene_pool'] = tuple(container.std_pool)
 
             result_dict_list.append(result_dict)
 

@@ -25,6 +25,7 @@ if __name__ == '__main__':
     pars_args = parser.parse_args()
     pars_args = vars(pars_args)
 
+
     config_dict = config_file(pars_args['config_path'])
 
     tumor_pool = get_genepool(pars_args['config_path'], config_dict['threshold']['Tumor'], 'Tumor')
