@@ -14,17 +14,17 @@ from functools import partial, reduce
 
 
 if __name__ == '__main__':
-    #parameters
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--config_path", "-c",
-    #                     type=str,
-    #                     help="config file path, usually ./config/config.yaml")
-    # pars_args = parser.parse_args()
-    # pars_args = vars(pars_args)
-    #
-    pars_args = {}
-    pars_args['config_path'] = './config/config.yaml'
-    pars_args['result_path'] = './src/result.yaml'
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config_path", "-c",
+                        type=str,
+                        help="config file path, usually ./config/config.yaml")
+    parser.add_argument("--result_path", "-r",
+                        type=str,
+                        help="result file path, usually ./src/result.yaml")
+    pars_args = parser.parse_args()
+    pars_args = vars(pars_args)
+
     config_dict = config_file(pars_args['config_path'])
 
     tumor_pool = get_genepool(pars_args['config_path'], config_dict['threshold']['Tumor'], 'Tumor')
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     non_scaled_result = formatting_performance_and_model(non_scaled_tup_trimmed, scaled=None)
     std_scaled_result = formatting_performance_and_model(std_scaled_tup_trimmed, scaled='std')
-    result = non_scaled_result + std_scaled_result
+    result = list(enumerate((non_scaled_result or []) + (std_scaled_result or [])))
     save_result(result, pars_args['result_path'])
 
 

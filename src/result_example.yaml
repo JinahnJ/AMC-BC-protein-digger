@@ -1,0 +1,125 @@
+- !!python/tuple
+  - 0
+  - Antibody: !!python/tuple
+    - CD44v6
+    - CK5
+    - GLS
+    Classification_model:
+      Model: "DecisionTreeClassifier(class_weight='balanced', max_depth=3, min_samples_leaf=3,\n\
+        \                       min_samples_split=5, random_state=3207)"
+    Feature_selection_model:
+      Model: LogisticRegression(class_weight='balanced', max_iter=10, solver='liblinear')
+      Param:
+        C: 1.0
+        class_weight: balanced
+        dual: false
+        fit_intercept: true
+        intercept_scaling: 1
+        l1_ratio: null
+        max_iter: 10
+        multi_class: deprecated
+        n_jobs: null
+        penalty: l2
+        random_state: null
+        solver: liblinear
+        tol: 0.0001
+        verbose: 0
+        warm_start: false
+    Gene_pool: !!python/tuple
+    - CD44v6
+    - GCLC
+    - CBS
+    - FOXA1
+    - GATA3
+    - PSAT1
+    - B-catenin
+    - CK5
+    - GLS
+    Train_accuracy: 0.6909090909090909
+    Train_fdr: 0.18518518518518517
+    Train_fpr: 0.23809523809523808
+    Validation_accuracy: 0.6805555555555556
+    Validation_fdr: 0.5217391304347826
+    Validation_fpr: 0.24
+    p_value_btw_NRs: 0.9832114403358088
+    p_value_btw_Rs: 0.2232866112811222
+    p_value_in_train: 1.7137272556048815e-05
+    p_value_in_val: 0.029396471954994553
+- !!python/tuple
+  - 1
+  - Antibody: !!python/tuple
+    - CD44v6
+    - CK5
+    - GLS
+    - PSAT1
+    Classification_model:
+      Model: "DecisionTreeClassifier(class_weight='balanced', max_depth=3, min_samples_leaf=3,\n\
+        \                       min_samples_split=5, random_state=3207)"
+    Feature_selection_model:
+      Model: LogisticRegression(class_weight='balanced', max_iter=10, solver='liblinear')
+      Param:
+        C: 1.0
+        class_weight: balanced
+        dual: false
+        fit_intercept: true
+        intercept_scaling: 1
+        l1_ratio: null
+        max_iter: 10
+        multi_class: deprecated
+        n_jobs: null
+        penalty: l2
+        random_state: null
+        solver: liblinear
+        tol: 0.0001
+        verbose: 0
+        warm_start: false
+    Gene_pool: !!python/tuple
+    - CD44v6
+    - GCLC
+    - CBS
+    - FOXA1
+    - GATA3
+    - PSAT1
+    - B-catenin
+    - CK5
+    - GLS
+    Train_accuracy: 0.6909090909090909
+    Train_fdr: 0.18518518518518517
+    Train_fpr: 0.23809523809523808
+    Validation_accuracy: 0.6527777777777778
+    Validation_fdr: 0.5555555555555556
+    Validation_fpr: 0.3
+    p_value_btw_NRs: 0.5114736321862697
+    p_value_btw_Rs: 0.39856737961588595
+    p_value_in_train: 1.7137272556048815e-05
+    p_value_in_val: 0.048330682008260274
+- !!python/tuple
+  - 2
+  - Antibody: !!python/tuple
+    - NOTUM
+    - PPIL2
+    Classification_model:
+      Model: "DecisionTreeClassifier(class_weight='balanced', max_depth=3, min_samples_leaf=3,\n\
+        \                       min_samples_split=5, random_state=3207)"
+    Feature_selection_model:
+      Model: "DecisionTreeClassifier(class_weight='balanced', max_depth=3, min_samples_leaf=3,\n\
+        \                       min_samples_split=5)"
+    Gene_pool: !!python/tuple
+    - IL15RA
+    - NOTUM
+    - ICAM1
+    - PPIL2
+    - FOXA1
+    - FYB1
+    - CARD16
+    - PPP2R5A
+    Train_accuracy: 0.6454545454545455
+    Train_fdr: 0.14634146341463414
+    Train_fpr: 0.14285714285714285
+    Validation_accuracy: 0.6944444444444444
+    Validation_fdr: 0.5
+    Validation_fpr: 0.28
+    p_value_btw_NRs: 0.11462827498302819
+    p_value_btw_Rs: 0.32474632847345875
+    p_value_in_train: 5.8103497775384215e-05
+    p_value_in_val: 0.0038251092985256622

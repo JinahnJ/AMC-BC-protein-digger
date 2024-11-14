@@ -7,7 +7,6 @@ import yaml
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.linear_model import LogisticRegression
 
-
 def save_ranking_tuple_yaml(t:tuple, result_root:str)->None:
    result_list = []
    for lr, dt in t:
@@ -47,19 +46,9 @@ def get_model_result(estimator:object)->dict:
         # result_dict['Param'] = estimator.get_params()
         # try: result_dict['Dot_data'] = export_graphviz(estimator,)
         # except: result_dict['Dot_data'] = 'Not fitted '
-        try:
-            result_dict['Feature'] = tuple(estimator.feature_importances_)
-            result_dict['Feature_in'] = tuple(estimator.feature_names_in_)
-        except:
-            result_dict['Feature'] = 'Not fitted'
     elif isinstance(estimator, LogisticRegression):
         result_dict['Model'] = str(estimator)
         result_dict['Param'] = estimator.get_params()
-        try:
-            result_dict['Feature_in'] = tuple(estimator.feature_names_in_)
-            result_dict['Coefficient'] = tuple(estimator.coef_)
-        except: result_dict['Coefficient'] = 'Not fitted'
-
     else: pass
 
     return result_dict
