@@ -25,6 +25,10 @@ if __name__ == '__main__':
     pars_args = parser.parse_args()
     pars_args = vars(pars_args)
 
+    # pars_args = {}
+    # pars_args['config_path'] = './config/config.yaml'
+    # pars_args['result_path'] = './src/results.yaml'
+
 
     config_dict = config_file(pars_args['config_path'])
 

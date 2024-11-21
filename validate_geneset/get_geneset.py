@@ -66,12 +66,17 @@ def std_df(df:pd.DataFrame, column_name:str='Value') -> pd.DataFrame:
 
 
 def train_val_df(non_scaled_df:pd.DataFrame, std_df:pd.DataFrame,
+                 cell_group_column_name:str='cell_type',
+                 select_group:tuple=('Tumor',),
                  target_column:str='train_group', train_msk:str='Train', val_msk:str='Validation')->tuple:
+    get_group_name = lambda x : x[0]
+    get_cell_group = lambda x : x.copy().loc[x[cell_group_column_name] == get_group_name(select_group)]
     get_train = lambda x : x.copy().loc[x[target_column] == train_msk]
     get_validation = lambda x: x.copy().loc[x[target_column] == val_msk]
 
-    train_tuple = tuple(map(get_train, (non_scaled_df, std_df)))
-    val_tuple = tuple(map(get_validation, (non_scaled_df, std_df)))
+    cell_group_tuple = tuple(map(get_cell_group, (non_scaled_df, std_df)))
+    train_tuple = tuple(map(get_train, cell_group_tuple))
+    val_tuple = tuple(map(get_validation, cell_group_tuple))
 
     return train_tuple, val_tuple
 
@@ -95,7 +100,7 @@ def generate_genepool_df_loader(d_cls:Genepool_container, df:pd.DataFrame) -> Ge
     sliced_df = slice_df(df_, non_scaled_pool)
     scaled_df = std_df(df_)
     std_sliced_df = slice_df(scaled_df, std_pool)
-    t_v_df = train_val_df(sliced_df, std_sliced_df)
+    t_v_df = train_val_df(sliced_df, std_sliced_df, select_group=d_cls.group_name)
     t_v_xy = load_train_val_data(t_v_df)
 
     genepool_loader_ins = Genepool_df_loader(d_cls, df_, sliced_df, std_sliced_df, t_v_df, t_v_xy)

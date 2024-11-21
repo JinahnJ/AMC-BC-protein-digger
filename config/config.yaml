@@ -1,4 +1,4 @@
-dataset_file: ./dst/example_dataset.pkl
+dataset_file: ./dst/refactor_amc_dataset.pkl
 genepool_selection_range:
   max_value: 5
   min_value: 2

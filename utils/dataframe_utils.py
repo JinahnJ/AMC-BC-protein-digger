@@ -30,7 +30,7 @@ def generate_pair_dataframe(iterable_divider, dataframe, d_cls,):
     return d_cls_tup
 
 if __name__ == '__main__':
-    pass
+    df = get_dataframe(root='./dst/amc_dataset.pkl')
 
 
 
