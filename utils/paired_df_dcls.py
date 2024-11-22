@@ -19,20 +19,22 @@ class Paired_dataframe:
        return tup
 
     @staticmethod
-    def pivot_df(df: pd.DataFrame, target_column='Antibody', x_value='Value', y_value='response'):
+    def pivot_df(df: pd.DataFrame, target_column='Antibody', x_value='Value', y_value='response', sn_column='SN'):
         df = df.copy()
         df['id'] = df.groupby(target_column, observed=False).cumcount()
         df_x = df.pivot(index='id', columns=target_column, values=x_value)
         df_y = df.pivot(index='id', columns=target_column, values=y_value)
         sr_y = df_y.iloc[:,0]
-        return tuple([df_x, sr_y])
+        sr_sn = df.pivot(index='id', columns=target_column, values=sn_column).iloc[:, 0]  # SN Series
+
+        return tuple([df_x, sr_y, sr_sn])
 
     @property
     def pivoted_df(self):
         tup = self.key_df_tup
         group_tup = ((key, df) for key, df in tup)
         group_tup_xy = ((key, self.pivot_df(df)) for key, df in group_tup)
-        tup_ = ((self.name, group_name, df_x, df_y) for group_name, (df_x, df_y) in group_tup_xy)
+        tup_ = ((self.name, group_name, df_x, df_y) for group_name, (df_x, df_y, _) in group_tup_xy)
         return tup_
 
 

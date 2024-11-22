@@ -14,7 +14,7 @@ from functools import partial, reduce
 
 
 if __name__ == '__main__':
-
+    ''' Running by terminal'''
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_path", "-c",
                         type=str,
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     pars_args = parser.parse_args()
     pars_args = vars(pars_args)
 
+    # ''' Running by IDE'''
     # pars_args = {}
     # pars_args['config_path'] = './config/config.yaml'
     # pars_args['result_path'] = './src/results.yaml'

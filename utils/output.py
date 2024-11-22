@@ -5,7 +5,10 @@ from ranker.get_antibody_ranking import get_antibody_ranking
 from itertools import batched
 import yaml
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn import tree
 from sklearn.linear_model import LogisticRegression
+from validate_geneset.get_geneset import Genepool_rank_result_container
+import matplotlib.pyplot as plt
 
 def save_ranking_tuple_yaml(t:tuple, result_root:str)->None:
    result_list = []
@@ -36,7 +39,7 @@ def save_result(result_dict_list:list[dict], result_root:str)->None:
         print('You have no result.')
     else:
         with open(result_root, 'w') as f:
-            yaml.dump(result_dict_list, f, default_flow_style=False)
+            yaml.dump(result_dict_list, f, default_flow_style=True)
 
 
 def get_model_result(estimator:object)->dict:
@@ -48,10 +51,20 @@ def get_model_result(estimator:object)->dict:
         # except: result_dict['Dot_data'] = 'Not fitted '
     elif isinstance(estimator, LogisticRegression):
         result_dict['Model'] = str(estimator)
-        result_dict['Param'] = estimator.get_params()
     else: pass
 
     return result_dict
+
+def get_total_result(g:Genepool_rank_result_container)->list:
+    if isinstance(g.base_model, LogisticRegression):
+        dict_result =  g.total_prediction[0].to_dict(orient='index')
+    elif isinstance(g.base_model, DecisionTreeClassifier):
+        total_prediction, tree_instance = g.total_prediction
+        dict_result = total_prediction.to_dict(orient='index')
+    else:
+        raise ValueError("Unsupported model type")
+    return dict_result
+
 
 
 
@@ -87,6 +100,7 @@ def formatting_performance_and_model(t:tuple, scaled=None)->list[dict]:
             result_dict['p_value_btw_NRs'] = float(p_value_btw_NRs)
             result_dict['p_value_in_train'] = float(p_value_in_train)
             result_dict['p_value_in_val'] = float(p_value_in_val)
+            result_dict['classify_total_patient'] =  get_total_result(result_container)
             if scale == 'non_scaled':
                 result_dict['Scale'] = 'Non-scaled'
                 result_dict['Extracted_gene_pool'] = tuple(container.non_scaled_pool)

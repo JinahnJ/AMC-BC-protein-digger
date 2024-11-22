@@ -4,14 +4,14 @@ from validate_geneset.get_geneset import prediction_validation, Genepool_contain
 
 
 def more_than(i: float, threshold: float) -> bool:
-    if i >= threshold:
+    if i > threshold:
         return True
     else:
         return False
 
 
 def less_than(i: float, threshold: float) -> bool:
-    if i < threshold:
+    if i <= threshold:
         return True
     else:
         return False

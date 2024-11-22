@@ -4,10 +4,12 @@ Take gene sets from genepool_generator and slice dataframe
 from itertools import chain, batched
 from functools import partial
 from typing import Tuple, Any
-
 import pandas as pd
 from dataclasses import dataclass, field
 import sklearn.feature_selection
+from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 from utils.paired_df_dcls import Paired_dataframe
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.metrics import confusion_matrix
@@ -30,12 +32,16 @@ class Genepool_container:
 class Train_val_xy:
     train_x: pd.DataFrame
     train_y: pd.Series
+    train_sn_sr: pd.Series
     val_x: pd.DataFrame
     val_y: pd.Series
+    val_sn_sr: pd.Series
     std_train_x: pd.DataFrame
     std_train_y: pd.Series
+    std_train_sn_sr: pd.Series
     std_val_x: pd.DataFrame
     std_val_y: pd.Series
+    std_val_sn_sr: pd.Series
 
 def generate_genepool_cls(d_cls, *args):
     f = lambda x : d_cls(*x)
@@ -86,10 +92,10 @@ def load_train_val_data(t:tuple)->dataclass:
     r = map(f, flatten_t)
     r_batch = batched(r, 2)
     r_batched_zip = tuple(zip(*r_batch))
-    train_val_xy = Train_val_xy(r_batched_zip[0][0][0], r_batched_zip[0][0][1],
-                                r_batched_zip[0][1][0], r_batched_zip[0][1][1],
-                                r_batched_zip[1][0][0], r_batched_zip[1][0][1],
-                                r_batched_zip[1][1][0], r_batched_zip[1][1][1],)
+    train_val_xy = Train_val_xy(r_batched_zip[0][0][0], r_batched_zip[0][0][1], r_batched_zip[0][0][2],
+                                r_batched_zip[0][1][0], r_batched_zip[0][1][1], r_batched_zip[0][1][2],
+                                r_batched_zip[1][0][0], r_batched_zip[1][0][1], r_batched_zip[1][0][2],
+                                r_batched_zip[1][1][0], r_batched_zip[1][1][1], r_batched_zip[1][1][2],)
     return train_val_xy
 
 
@@ -112,6 +118,7 @@ class Genepool_rank_result_container:
     base_model : object #scikitlearn classifier
     ttest_p_value : tuple #  p_value_btw_Rs, p_value_btw_NRs, p_value_in_train, p_value_in_val
     cm : tuple #(train accuracy, fdr, fpr), (val accuracy, fdr, fpr)
+    total_prediction : tuple # For making Decision tree
     antibody: str = field(init=False)  # This will be calculated in __post_init__
     base_model_: str = field(init=False)  # Calculated at initialization
 
@@ -205,22 +212,26 @@ def get_ranked_antibody(trained_sfs_models:sklearn.feature_selection.SequentialF
     return ranking
 
 
-def slicing_df(gene_list,tr_x, tr_y, val_x, val_y)->tuple:
-    tup = tuple([tuple([tr_x[gene], tr_y, val_x[gene], val_y]) for gene in gene_list])
+def slicing_df(gene_list,tr_x, tr_y, train_sn_sr, val_x, val_y, val_sn_sr)->tuple:
+    tup = tuple([tuple([tr_x[gene], tr_y, train_sn_sr, val_x[gene], val_y, val_sn_sr]) for gene in gene_list])
     return tup
 
 def get_slice_df_by_ab_nonstd(gene_ranker:Genepool_ranker, ab_rank:tuple[np.array]):
     non_scaled_f = partial(slicing_df, tr_x=gene_ranker.genepool_df_loader.load_train_val_data.train_x,
                 tr_y=gene_ranker.genepool_df_loader.load_train_val_data.train_y,
+                train_sn_sr=gene_ranker.genepool_df_loader.load_train_val_data.train_sn_sr,
                 val_x=gene_ranker.genepool_df_loader.load_train_val_data.val_x,
-                val_y=gene_ranker.genepool_df_loader.load_train_val_data.val_y)
+                val_y=gene_ranker.genepool_df_loader.load_train_val_data.val_y,
+                val_sn_sr=gene_ranker.genepool_df_loader.load_train_val_data.val_sn_sr,)
     return tuple(chain.from_iterable(tuple(map(non_scaled_f, ab_rank))))
 
 def get_slice_df_by_ab_std(gene_ranker:Genepool_ranker, ab_rank:tuple[np.array]):
     scaled_f = partial(slicing_df, tr_x=gene_ranker.genepool_df_loader.load_train_val_data.std_train_x,
                 tr_y=gene_ranker.genepool_df_loader.load_train_val_data.std_train_y,
+                train_sn_sr=gene_ranker.genepool_df_loader.load_train_val_data.std_train_sn_sr,
                 val_x=gene_ranker.genepool_df_loader.load_train_val_data.std_val_x,
-                val_y=gene_ranker.genepool_df_loader.load_train_val_data.std_val_y)
+                val_y=gene_ranker.genepool_df_loader.load_train_val_data.std_val_y,
+                val_sn_sr=gene_ranker.genepool_df_loader.load_train_val_data.std_val_sn_sr,)
     return tuple(chain.from_iterable(tuple(map(scaled_f, ab_rank))))
 
 def get_performance(cm):
@@ -252,17 +263,33 @@ def get_t_test_p_value(t_x:pd.DataFrame, t_y:pd.Series, v_x:pd.DataFrame, v_y:pd
 
     return p_value_btw_Rs, p_value_btw_NRs, p_value_in_train, p_value_in_val
 
+def total_df_prediction(trained_estimator:object, t_x:pd.DataFrame, t_y:pd.Series,
+                        t_sn:pd.Series, v_x:pd.DataFrame, v_y:pd.Series, v_sn:pd.Series)->tuple:
+    total_x = pd.concat([t_x, v_x], axis=0)
+    total_y = pd.concat([t_y, v_y], axis=0)
+    total_sn = pd.concat([t_sn, v_sn], axis=0)
+    total_df_prediction = pd.DataFrame(trained_estimator.predict(total_x), columns=['Prediction'], index=total_sn)
+    if isinstance(trained_estimator, DecisionTreeClassifier):
+        result_for_node = trained_estimator.apply(total_x)
+        total_df_prediction['result_for_node'] = result_for_node
+        tree_instance = trained_estimator.tree_
+        return total_df_prediction, tree_instance
+    else:
+        return total_df_prediction,
+
+
 
 def prediction_performance(t:tuple, estimator:object)->object:
-    t_x, t_y, v_x, v_y = t
+    t_x, t_y, t_sn, v_x, v_y, v_sn = t
     train_m = estimator.fit(t_x, t_y)
+    total_pred = total_df_prediction(train_m, t_x, t_y, t_sn, v_x, v_y, v_sn)
     pred_train_x = train_m.predict(t_x)
     pred_val_x = train_m.predict(v_x)
     train_cm = confusion_matrix(t_y, pred_train_x)
     val_cm = confusion_matrix(v_y, pred_val_x)
     ttest_result = get_t_test_p_value(pred_train_x, t_y, pred_val_x, v_y)
 
-    return Genepool_rank_result_container(train_m, ttest_result, tuple([get_performance(train_cm), get_performance(val_cm)]))
+    return Genepool_rank_result_container(train_m, ttest_result, tuple([get_performance(train_cm), get_performance(val_cm)]), total_pred)
 
 
 def gene_pool_and_prediction_performance(rank_result:Genepool_rank_result_container, df_loader:Genepool_df_loader):
